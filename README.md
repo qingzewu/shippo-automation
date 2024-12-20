@@ -14,24 +14,6 @@ Features
 
 ## Project Structure
 
-### File Structure
-├── main.py                     # Entry point for the application
-├── controllers/
-│   ├── shipment_controller.py  # Handles shipment processing logic
-│   ├── label_downloader.py     # Handles label downloading and merging
-├── utils/
-│   ├── csv_handler.py          # Handles reading/writing CSV files
-│   ├── config.py               # Configuration and constants
-├── data/
-│   ├── shipments.csv           # Input CSV for shipment data
-│   ├── shipments_with_tracking.csv  # Output CSV with tracking details
-├── labels/                     # Directory to store downloaded labels
-├── bulk_labels.pdf             # Bulk PDF with all shipping labels
-├── requirements.txt            # Project dependencies
-├── README.md                   # Documentation for the project
-
-Input CSV (data/shipments.csv)
-
 ### Input CSV (data/shipments.csv)
 
 Column	Description
