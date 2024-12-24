@@ -15,10 +15,10 @@ address_from = components.AddressCreateRequest(
 
 address_to = components.AddressCreateRequest(
     name="Mr Hippo",
-    street1="123 Broadway 1",
-    city="New York",
-    state="NY",
-    zip="10007",
+    street1="14989 Redwood Ln",
+    city="Chino Hills",
+    state="CA",
+    zip="91709",
     country="US"
 )
 
@@ -70,6 +70,7 @@ transaction = shippo_sdk.transactions.create(
 
 # Retrieve label url and tracking number or error message
 if transaction.status == "SUCCESS":
+    print(shipment.rates)
     print(transaction.label_url)
     print(transaction.tracking_number)
     print(transaction)

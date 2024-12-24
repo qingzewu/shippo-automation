@@ -17,11 +17,27 @@ def download_label(label_url, file_name):
     else:
         raise Exception(f"Failed to download label: {label_url}")
 
-def merge_pdfs(pdf_files):
-    """Merges multiple PDF files into one."""
+def merge_pdfs(pdf_file_paths, output_file):
+    """
+    Merges multiple PDF files into a single PDF.
+
+    Args:
+        pdf_file_paths (list): List of paths to individual PDF files.
+        output_file (str): Path to save the merged PDF file.
+
+    Returns:
+        None
+    """
     merger = PdfMerger()
-    for pdf in pdf_files:
-        merger.append(pdf)
-    merger.write(BULK_PDF_FILE)
-    merger.close()
-    print(f"Bulk PDF created: {BULK_PDF_FILE}")
+
+    for pdf in pdf_file_paths:
+        try:
+            merger.append(pdf)
+        except Exception as e:
+            print(f"Error merging {pdf}: {e}")
+
+    try:
+        merger.write(output_file)
+        print(f"Merged PDF created at: {output_file}")
+    finally:
+        merger.close()
