@@ -1,6 +1,0 @@
-Error processing shipment 1 for Griselda Gasparini: API error occurred: Status 400
-{"detail":"Invalid input type for field: zip"}
-Error processing shipment 2 for Jessica Meier: API error occurred: Status 400
-{"detail":"Invalid input type for field: zip"}
-Error processing shipment 3 for Melinda Morris: API error occurred: Status 400
-{"detail":"Invalid input type for field: zip"}

@@ -2,7 +2,7 @@ import shippo
 import logging
 from shippo.models import components
 from controllers.label_downloader import download_label
-from utils.config import SHIPPO_API_KEY_TEST as SHIPPO_API_KEY
+from utils.config import Shippo_API_KEY_LIVE as SHIPPO_API_KEY
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
