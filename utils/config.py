@@ -1,6 +1,6 @@
 # Shippo API Key
-SHIPPO_API_KEY_TEST = "shippo_test_7b8cc24c4c879f92ed2297befec123915b47c39d"
-Shippo_API_KEY_LIVE = ""
+SHIPPO_API_KEY_TEST = "shippo_test_1c36184ff4734805a9445180cecf405aa1e6bd8b"
+Shippo_API_KEY_LIVE = "shippo_live_f335769f8371ab22d7b2a130c087b1ec71ebb66b"
 # File paths
 INPUT_CSV = "data/shipments.csv"
 OUTPUT_CSV = "data/shipments_with_tracking.csv"

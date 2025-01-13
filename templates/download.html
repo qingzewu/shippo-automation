@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download Processed Files</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        a {
+            text-decoration: none;
+            margin: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Download Your Files</h1>
+    <div class="button-container">
+        <a href="/download/csv?csv_path={{ csv_path }}"><button>Download CSV</button></a>
+        <a href="/download/pdf?pdf_path={{ pdf_path }}"><button>Download PDF</button></a>
+        {% if error_log_path %}
+        <a href="/download/log?error_log_path={{ error_log_path }}"><button>Download Error Log</button></a>
+        {% endif %}
+    </div>
+</body>
+</html>

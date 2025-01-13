@@ -2,7 +2,7 @@ import shippo
 import logging
 from shippo.models import components
 from controllers.label_downloader import download_label
-from utils.config import Shippo_API_KEY_LIVE as SHIPPO_API_KEY
+from utils.config import SHIPPO_API_KEY_TEST as SHIPPO_API_KEY
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -11,9 +11,10 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %
 shippo_sdk = shippo.Shippo(api_key_header=SHIPPO_API_KEY)
 
 def process_shipments(shipment_data):
-    """Processes shipments in bulk based on the new CSV format."""
+    """Processes shipments in bulk based on the provided data."""
     results = []
     pdf_files = []
+    errors = []
 
     # Hardcoded address_from details
     address_from = components.AddressCreateRequest(
@@ -29,15 +30,23 @@ def process_shipments(shipment_data):
 
     for index, row in enumerate(shipment_data):
         try:
-            logging.info(f"Processing shipment {index + 1} for {row['Recipient Name']}")
+            recipient_name = row.get("Recipient Name", "Unknown")
+            logging.info(f"Processing shipment {index + 1} for {recipient_name}")
+
+            # Validate required fields
+            required_fields = ["Recipient Name", "Street Line 1", "City", "State/Province",
+                               "Zip/Postal Code", "Country", "Item Weight", "Item Weight Unit"]
+            missing_fields = [field for field in required_fields if field not in row or not row[field]]
+            if missing_fields:
+                raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
             # Create recipient address (address_to)
             address_to = components.AddressCreateRequest(
                 name=row["Recipient Name"],
-                email=row["Email"],
-                phone=row["Phone"],
+                email=row.get("Email", ""),
+                phone=row.get("Phone", ""),
                 street1=row["Street Line 1"],
-                street2=row["Street Line 2"] if row["Street Line 2"] else None,
+                street2=row.get("Street Line 2", None),
                 city=row["City"],
                 state=row["State/Province"],
                 zip=row["Zip/Postal Code"],
@@ -46,7 +55,7 @@ def process_shipments(shipment_data):
 
             # Create parcel object based on item details
             parcel = components.ParcelCreateRequest(
-                length=6,  # Assuming a default length (adjust if needed)
+                length=6,  # Default length
                 width=6,   # Default width
                 height=2,  # Default height
                 distance_unit=components.DistanceUnitEnum.IN,
@@ -54,7 +63,7 @@ def process_shipments(shipment_data):
                 mass_unit=components.WeightUnitEnum[row["Item Weight Unit"]]
             )
 
-            # Create shipment with hardcoded address_from
+            # Create shipment with address_from and address_to
             logging.debug("Creating shipment...")
             shipment = shippo_sdk.shipments.create(
                 components.ShipmentCreateRequest(
@@ -64,26 +73,14 @@ def process_shipments(shipment_data):
                     async_=False
                 )
             )
-            logging.info(f"Shipment created successfully for {row['Recipient Name']}.")
-
-            # Log available rates
-            # logging.debug("Available rates:")
-            for rate in shipment.rates:
-                continue
-                # logging.debug(
-                #     f"Provider: {rate.provider}, "
-                #     f"Service Level: {rate.servicelevel.name}, "
-                #     f"Price: {rate.amount} {rate.currency}"
-                # )
+            logging.info(f"Shipment created successfully for {recipient_name}.")
 
             # Find USPS Ground Advantage rate
-            usps_ground_advantage_rate = None
-            for rate in shipment.rates:
-                if rate.provider == "USPS" and rate.servicelevel.name == "Ground Advantage":
-                    usps_ground_advantage_rate = rate
-                    break
+            usps_ground_advantage_rate = next(
+                (rate for rate in shipment.rates if rate.provider == "USPS" and rate.servicelevel.name == "Ground Advantage"),
+                None
+            )
 
-            # Raise an error if USPS Ground Advantage is not available
             if not usps_ground_advantage_rate:
                 raise ValueError("USPS Ground Advantage rate not available for this shipment.")
 
@@ -104,10 +101,10 @@ def process_shipments(shipment_data):
                 )
             )
 
-            # Handle success
             if transaction.status == "SUCCESS":
                 label_url = transaction.label_url
-                pdf_files.append(download_label(label_url, f"label_{index + 1}.pdf"))
+                label_path = download_label(label_url, f"label_{index + 1}.pdf")
+                pdf_files.append(label_path)
                 logging.info(f"Label purchased successfully. Tracking number: {transaction.tracking_number}")
 
                 # Append shipment details to results
@@ -120,17 +117,14 @@ def process_shipments(shipment_data):
                     "label_path": label_url
                 })
             else:
-                # Handle transaction failure
                 error_message = transaction.messages
-                logging.error(f"Label purchase failed: {error_message}")
-                raise Exception(f"Label purchase failed for {row['Recipient Name']}: {error_message}")
+                logging.error(f"Label purchase failed for {recipient_name}: {error_message}")
+                errors.append(f"Label purchase failed for {recipient_name}: {error_message}")
 
         except Exception as e:
-            # Log recipient-specific error and stop the program
-            error_message = f"Error processing shipment {index + 1} for {row['Recipient Name']}: {str(e)}"
+            # Log and record recipient-specific error
+            error_message = f"Error processing shipment {index + 1} for {recipient_name}: {str(e)}"
             logging.error(error_message)
+            errors.append(error_message)
 
-            # Raise an exception to stop processing further shipments
-            raise Exception(error_message)
-
-    return results, pdf_files
+    return results, pdf_files, errors
