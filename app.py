@@ -2,7 +2,7 @@ from flask import Flask, request, send_file, render_template
 import os
 from controllers.shipment_controller import process_shipments
 from utils.csv_handler import read_csv, write_csv
-from utils.xlsx_handler import read_xlsx
+from utils.xlsx_handler import read_xlsx, write_xlsx
 from controllers.label_downloader import merge_pdfs
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ def handle_file_upload():
     ext = ext.lower()
 
     # Set output paths
-    csv_output_path = os.path.join(OUTPUT_FOLDER, f"{base_name}_with_tracking.csv")
+    xlsx_output_path = os.path.join(OUTPUT_FOLDER, f"{base_name}_反馈.xlsx")
     pdf_output_path = os.path.join(OUTPUT_FOLDER, f"{base_name}_bulk_labels.pdf")
     error_log_path = os.path.join(OUTPUT_FOLDER, f"{base_name}_errors.log")
 
@@ -73,9 +73,10 @@ def handle_file_upload():
             
             processed_results.append(combined_row)
 
-        # Save results to CSV
+        # Save results to XLSX
         if processed_results:
-            write_csv(csv_output_path, fieldnames, processed_results)
+            write_xlsx(xlsx_output_path, processed_results)
+            print(f"Processed shipments. Results written to {xlsx_output_path}")
 
         # Save error log if errors occurred
         if errors:
@@ -85,16 +86,21 @@ def handle_file_upload():
         # Merge PDF labels if generated
         if pdf_files:
             merge_pdfs(pdf_files, pdf_output_path)
-        # Provide options for downloading CSV and PDF
-        if errors:
-            return render_template('download.html', 
-                                   csv_path=csv_output_path, 
-                                   pdf_path=pdf_output_path, 
-                                   error_log_path=error_log_path)
 
-        return render_template('download.html', 
-                               csv_path=csv_output_path, 
-                               pdf_path=pdf_output_path)
+        # Provide options for downloading XLSX and PDF
+        if errors:
+            return render_template(
+                'download.html', 
+                xlsx_path=xlsx_output_path, 
+                pdf_path=pdf_output_path, 
+                error_log_path=error_log_path
+            )
+
+        return render_template(
+            'download.html', 
+            xlsx_path=xlsx_output_path, 
+            pdf_path=pdf_output_path
+        )
 
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
@@ -104,7 +110,7 @@ def handle_file_upload():
 def download_file(file_type):
     """Serve files for download."""
     file_map = {
-        "csv": request.args.get("csv_path"),
+        "xlsx": request.args.get("xlsx_path"),
         "pdf": request.args.get("pdf_path"),
         "log": request.args.get("error_log_path"),
     }
