@@ -56,16 +56,22 @@ def handle_file_upload():
         # Process shipments
         results, pdf_files, errors = process_shipments(shipment_data)
 
-        # Remove `label_path` and `error_message` from results
-        processed_results = []
-        for result in results:
-            filtered_result = {key: value for key, value in result.items() if key not in ["label_path", "error_message"]}
-            processed_results.append(filtered_result)
-
-        # Ensure the fieldnames match the filtered results
+        # Ensure the fieldnames match the original input file + additional fields
         fieldnames = list(shipment_data[0].keys()) + [
             "tracking_number", "carrier", "shipment_level", "price"
         ]
+
+        # Prepare processed results with all original fields and selected additional fields
+        processed_results = []
+        for original_row, processed_row in zip(shipment_data, results):
+            # Start with all original columns from the input file
+            combined_row = {key: original_row.get(key, "") for key in shipment_data[0].keys()}
+            
+            # Add the selected additional fields from the processing results
+            for key in ["tracking_number", "carrier", "shipment_level", "price"]:
+                combined_row[key] = processed_row.get(key, "")
+            
+            processed_results.append(combined_row)
 
         # Save results to CSV
         if processed_results:
@@ -79,7 +85,6 @@ def handle_file_upload():
         # Merge PDF labels if generated
         if pdf_files:
             merge_pdfs(pdf_files, pdf_output_path)
-
         # Provide options for downloading CSV and PDF
         if errors:
             return render_template('download.html', 
